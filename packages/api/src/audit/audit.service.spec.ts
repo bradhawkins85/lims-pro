@@ -112,7 +112,8 @@ describe('AuditService', () => {
       });
 
       // Should not include unchanged fields
-      const changes = mockPrismaService.auditLog.create.mock.calls[0][0].data.changes;
+      const changes =
+        mockPrismaService.auditLog.create.mock.calls[0][0].data.changes;
       expect(changes).not.toHaveProperty('status');
     });
 
@@ -128,7 +129,13 @@ describe('AuditService', () => {
         status: 'active',
       };
 
-      await service.logUpdate(context, 'TestTable', 'record-123', values, values);
+      await service.logUpdate(
+        context,
+        'TestTable',
+        'record-123',
+        values,
+        values,
+      );
 
       expect(mockPrismaService.auditLog.create).not.toHaveBeenCalled();
     });

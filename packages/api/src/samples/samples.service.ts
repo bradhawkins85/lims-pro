@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService, AuditContext } from '../audit/audit.service';
 import { Sample } from '@prisma/client';
@@ -16,7 +20,7 @@ export interface CreateSampleDto {
   temperatureOnReceiptC?: number;
   storageConditions?: string;
   comments?: string;
-  
+
   // Status flags
   expiredRawMaterial?: boolean;
   postIrradiatedRawMaterial?: boolean;
@@ -38,7 +42,7 @@ export interface UpdateSampleDto {
   temperatureOnReceiptC?: number;
   storageConditions?: string;
   comments?: string;
-  
+
   // Status flags
   expiredRawMaterial?: boolean;
   postIrradiatedRawMaterial?: boolean;
@@ -62,14 +66,19 @@ export class SamplesService {
    * Create a new Sample with sampleCode uniqueness enforcement
    * AC: A newly created Sample produces a create entry in AuditLog with full field set
    */
-  async createSample(dto: CreateSampleDto, context: AuditContext): Promise<Sample> {
+  async createSample(
+    dto: CreateSampleDto,
+    context: AuditContext,
+  ): Promise<Sample> {
     // Check if sampleCode already exists
     const existing = await this.prisma.sample.findUnique({
       where: { sampleCode: dto.sampleCode },
     });
 
     if (existing) {
-      throw new ConflictException(`Sample with sampleCode '${dto.sampleCode}' already exists`);
+      throw new ConflictException(
+        `Sample with sampleCode '${dto.sampleCode}' already exists`,
+      );
     }
 
     // Verify that job and client exist
@@ -78,7 +87,9 @@ export class SamplesService {
       throw new NotFoundException(`Job with ID '${dto.jobId}' not found`);
     }
 
-    const client = await this.prisma.client.findUnique({ where: { id: dto.clientId } });
+    const client = await this.prisma.client.findUnique({
+      where: { id: dto.clientId },
+    });
     if (!client) {
       throw new NotFoundException(`Client with ID '${dto.clientId}' not found`);
     }
@@ -118,12 +129,7 @@ export class SamplesService {
     });
 
     // Log audit entry for sample creation with full field set
-    await this.auditService.logCreate(
-      context,
-      'Sample',
-      sample.id,
-      sample,
-    );
+    await this.auditService.logCreate(context, 'Sample', sample.id, sample);
 
     return sample;
   }
@@ -238,10 +244,14 @@ export class SamplesService {
   /**
    * Update a sample
    */
-  async updateSample(id: string, dto: UpdateSampleDto, context: AuditContext): Promise<Sample> {
+  async updateSample(
+    id: string,
+    dto: UpdateSampleDto,
+    context: AuditContext,
+  ): Promise<Sample> {
     // Get the current sample state for audit logging
     const oldSample = await this.prisma.sample.findUnique({ where: { id } });
-    
+
     if (!oldSample) {
       throw new NotFoundException(`Sample with ID '${id}' not found`);
     }
@@ -279,7 +289,7 @@ export class SamplesService {
    */
   async releaseSample(id: string, context: AuditContext): Promise<Sample> {
     const oldSample = await this.prisma.sample.findUnique({ where: { id } });
-    
+
     if (!oldSample) {
       throw new NotFoundException(`Sample with ID '${id}' not found`);
     }
@@ -317,14 +327,14 @@ export class SamplesService {
    */
   async deleteSample(id: string, context: AuditContext): Promise<Sample> {
     const oldSample = await this.prisma.sample.findUnique({ where: { id } });
-    
+
     if (!oldSample) {
       throw new NotFoundException(`Sample with ID '${id}' not found`);
     }
 
     // For now, we'll just log the deletion but not actually delete the record
     // In a real system, you might want to add a 'deleted' or 'cancelled' field
-    
+
     // Log audit entry for sample deletion
     await this.auditService.logDelete(
       context,
@@ -335,5 +345,156 @@ export class SamplesService {
     );
 
     return oldSample;
+  }
+
+  /**
+   * Add a test pack to a sample
+   */
+  async addTestPackToSample(
+    sampleId: string,
+    testPackId: string,
+    context: AuditContext,
+  ) {
+    // Verify sample exists
+    const sample = await this.prisma.sample.findUnique({
+      where: { id: sampleId },
+    });
+    if (!sample) {
+      throw new NotFoundException(`Sample with ID '${sampleId}' not found`);
+    }
+
+    // Verify test pack exists
+    const testPack = await this.prisma.testPack.findUnique({
+      where: { id: testPackId },
+      include: {
+        items: {
+          include: {
+            testDefinition: true,
+          },
+        },
+      },
+    });
+    if (!testPack) {
+      throw new NotFoundException(`TestPack with ID '${testPackId}' not found`);
+    }
+
+    // Create test assignments for each test definition in the pack
+    const testAssignments = await Promise.all(
+      testPack.items.map((item) =>
+        this.prisma.testAssignment.create({
+          data: {
+            sampleId,
+            testDefinitionId: item.testDefinitionId,
+            sectionId: item.testDefinition.sectionId,
+            methodId: item.testDefinition.methodId,
+            specificationId: item.testDefinition.specificationId,
+            createdById: context.actorId,
+            updatedById: context.actorId,
+          },
+          include: {
+            testDefinition: true,
+            section: true,
+            method: true,
+            specification: true,
+          },
+        }),
+      ),
+    );
+
+    // Log audit entry
+    await this.auditService.logCreate(context, 'Sample', sampleId, {
+      testPackId,
+      testAssignmentsCreated: testAssignments.length,
+    });
+
+    return {
+      message: `Test pack added successfully with ${testAssignments.length} tests`,
+      testAssignments,
+    };
+  }
+
+  /**
+   * Add a single test to a sample
+   */
+  async addTestToSample(
+    sampleId: string,
+    testDefinitionId: string,
+    context: AuditContext,
+  ) {
+    // Verify sample exists
+    const sample = await this.prisma.sample.findUnique({
+      where: { id: sampleId },
+    });
+    if (!sample) {
+      throw new NotFoundException(`Sample with ID '${sampleId}' not found`);
+    }
+
+    // Verify test definition exists
+    const testDefinition = await this.prisma.testDefinition.findUnique({
+      where: { id: testDefinitionId },
+    });
+    if (!testDefinition) {
+      throw new NotFoundException(
+        `TestDefinition with ID '${testDefinitionId}' not found`,
+      );
+    }
+
+    // Create test assignment
+    const testAssignment = await this.prisma.testAssignment.create({
+      data: {
+        sampleId,
+        testDefinitionId,
+        sectionId: testDefinition.sectionId,
+        methodId: testDefinition.methodId,
+        specificationId: testDefinition.specificationId,
+        createdById: context.actorId,
+        updatedById: context.actorId,
+      },
+      include: {
+        testDefinition: true,
+        section: true,
+        method: true,
+        specification: true,
+      },
+    });
+
+    // Log audit entry
+    await this.auditService.logCreate(
+      context,
+      'TestAssignment',
+      testAssignment.id,
+      testAssignment,
+    );
+
+    return testAssignment;
+  }
+
+  /**
+   * Get attachments for a sample
+   */
+  async getSampleAttachments(sampleId: string) {
+    // Verify sample exists
+    const sample = await this.prisma.sample.findUnique({
+      where: { id: sampleId },
+    });
+    if (!sample) {
+      throw new NotFoundException(`Sample with ID '${sampleId}' not found`);
+    }
+
+    // Get attachments for the sample
+    const attachments = await this.prisma.attachment.findMany({
+      where: { sampleId },
+      include: {
+        createdBy: {
+          select: { id: true, email: true, name: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      data: attachments,
+      total: attachments.length,
+    };
   }
 }

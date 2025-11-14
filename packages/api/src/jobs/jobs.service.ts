@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService, AuditContext } from '../audit/audit.service';
 import { Job, JobStatus } from '@prisma/client';
@@ -44,7 +48,9 @@ export class JobsService {
     });
 
     if (existing) {
-      throw new ConflictException(`Job with jobNumber '${dto.jobNumber}' already exists`);
+      throw new ConflictException(
+        `Job with jobNumber '${dto.jobNumber}' already exists`,
+      );
     }
 
     // Create the job
@@ -71,12 +77,7 @@ export class JobsService {
     });
 
     // Log audit entry for job creation
-    await this.auditService.logCreate(
-      context,
-      'Job',
-      job.id,
-      job,
-    );
+    await this.auditService.logCreate(context, 'Job', job.id, job);
 
     return job;
   }
@@ -156,10 +157,14 @@ export class JobsService {
   /**
    * Update a job
    */
-  async updateJob(id: string, dto: UpdateJobDto, context: AuditContext): Promise<Job> {
+  async updateJob(
+    id: string,
+    dto: UpdateJobDto,
+    context: AuditContext,
+  ): Promise<Job> {
     // Get the current job state for audit logging
     const oldJob = await this.prisma.job.findUnique({ where: { id } });
-    
+
     if (!oldJob) {
       throw new NotFoundException(`Job with ID '${id}' not found`);
     }
@@ -180,13 +185,7 @@ export class JobsService {
     });
 
     // Log audit entry for job update
-    await this.auditService.logUpdate(
-      context,
-      'Job',
-      job.id,
-      oldJob,
-      job,
-    );
+    await this.auditService.logUpdate(context, 'Job', job.id, oldJob, job);
 
     return job;
   }
@@ -196,7 +195,7 @@ export class JobsService {
    */
   async deleteJob(id: string, context: AuditContext): Promise<Job> {
     const oldJob = await this.prisma.job.findUnique({ where: { id } });
-    
+
     if (!oldJob) {
       throw new NotFoundException(`Job with ID '${id}' not found`);
     }
@@ -220,5 +219,49 @@ export class JobsService {
     );
 
     return job;
+  }
+
+  /**
+   * Create a sample for a specific job
+   */
+  async createSampleForJob(jobId: string, dto: any, context: AuditContext) {
+    // Verify job exists
+    const job = await this.prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) {
+      throw new NotFoundException(`Job with ID '${jobId}' not found`);
+    }
+
+    // Check if sampleCode already exists
+    const existing = await this.prisma.sample.findUnique({
+      where: { sampleCode: dto.sampleCode },
+    });
+
+    if (existing) {
+      throw new ConflictException(
+        `Sample with sampleCode '${dto.sampleCode}' already exists`,
+      );
+    }
+
+    // Create the sample
+    const sample = await this.prisma.sample.create({
+      data: {
+        ...dto,
+        jobId,
+        clientId: job.clientId,
+        createdById: context.actorId,
+        updatedById: context.actorId,
+      },
+      include: {
+        job: true,
+        client: true,
+        createdBy: { select: { id: true, email: true, name: true } },
+        updatedBy: { select: { id: true, email: true, name: true } },
+      },
+    });
+
+    // Log audit entry
+    await this.auditService.logCreate(context, 'Sample', sample.id, sample);
+
+    return sample;
   }
 }

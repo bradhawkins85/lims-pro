@@ -243,7 +243,7 @@ describe('TestAssignmentsService', () => {
       expect(result).toHaveLength(2);
       expect(mockPrismaService.testAssignment.create).toHaveBeenCalledTimes(2);
       expect(mockAuditService.logCreate).toHaveBeenCalledTimes(2);
-      
+
       // All should have the same txId
       expect(mockAuditService.logCreate).toHaveBeenCalledWith(
         expect.objectContaining({ txId: 'tx-123' }),
