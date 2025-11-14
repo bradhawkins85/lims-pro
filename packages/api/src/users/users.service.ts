@@ -44,11 +44,7 @@ export class UsersService {
     return user;
   }
 
-  async listUsers(filters?: {
-    role?: Role;
-    page?: number;
-    perPage?: number;
-  }) {
+  async listUsers(filters?: { role?: Role; page?: number; perPage?: number }) {
     const page = filters?.page || 1;
     const perPage = filters?.perPage || 50;
     const skip = (page - 1) * perPage;

@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-  Param,
-} from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Param } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -26,7 +20,10 @@ export class AuditController {
   @ApiOperation({
     summary: 'Get audit logs with filters',
   })
-  @ApiResponse({ status: 200, description: 'Audit logs retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Audit logs retrieved successfully',
+  })
   async getAuditLogs(
     @Query('table') table?: string,
     @Query('recordId') recordId?: string,

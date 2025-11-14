@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService, AuditContext } from '../audit/audit.service';
 import { COAReport, COAReportStatus } from '@prisma/client';
@@ -157,10 +161,7 @@ export class COAReportsService {
    * Finalize COA (marks as FINAL, marks previous versions as SUPERSEDED)
    * AC: Each export creates or increments a COAReport.version
    */
-  async finalizeCOA(
-    id: string,
-    context: AuditContext,
-  ): Promise<COAReport> {
+  async finalizeCOA(id: string, context: AuditContext): Promise<COAReport> {
     const oldReport = await this.prisma.cOAReport.findUnique({
       where: { id },
     });
@@ -313,7 +314,11 @@ export class COAReportsService {
   /**
    * Build data snapshot from sample data
    */
-  private buildDataSnapshot(sample: any, version: number, context: AuditContext): COADataSnapshot {
+  private buildDataSnapshot(
+    sample: any,
+    version: number,
+    context: AuditContext,
+  ): COADataSnapshot {
     return {
       sample: {
         jobNumber: sample.job.jobNumber,
@@ -363,7 +368,8 @@ export class COAReportsService {
               unit: ta.specification.unit,
             }
           : undefined,
-        testName: ta.customTestName || ta.testDefinition?.name || 'Unnamed Test',
+        testName:
+          ta.customTestName || ta.testDefinition?.name || 'Unnamed Test',
         dueDate: ta.dueDate,
         analyst: ta.analyst
           ? { name: ta.analyst.name, email: ta.analyst.email }
@@ -400,18 +406,23 @@ export class COAReportsService {
 
     // Build status flags as tags
     const statusFlags: string[] = [];
-    if (sample.statusFlags.expiredRawMaterial) statusFlags.push('Expired Raw Material');
-    if (sample.statusFlags.postIrradiatedRawMaterial) statusFlags.push('Post-Irradiated');
+    if (sample.statusFlags.expiredRawMaterial)
+      statusFlags.push('Expired Raw Material');
+    if (sample.statusFlags.postIrradiatedRawMaterial)
+      statusFlags.push('Post-Irradiated');
     if (sample.statusFlags.stabilityStudy) statusFlags.push('Stability Study');
     if (sample.statusFlags.urgent) statusFlags.push('URGENT');
     if (sample.statusFlags.retest) statusFlags.push('Retest');
 
-    const statusFlagsHTML = statusFlags.length > 0
-      ? `<div class="status-flags">${statusFlags.map(f => `<span class="flag">${f}</span>`).join(' ')}</div>`
-      : '';
+    const statusFlagsHTML =
+      statusFlags.length > 0
+        ? `<div class="status-flags">${statusFlags.map((f) => `<span class="flag">${f}</span>`).join(' ')}</div>`
+        : '';
 
     // Build tests table
-    const testsTableRows = tests.map(test => `
+    const testsTableRows = tests
+      .map(
+        (test) => `
       <tr>
         <td>${test.section.name}</td>
         <td>${test.method.code} - ${test.method.name}</td>
@@ -427,7 +438,9 @@ export class COAReportsService {
         <td>${test.oos ? 'YES' : 'No'}</td>
         <td>${test.comments || ''}</td>
       </tr>
-    `).join('');
+    `,
+      )
+      .join('');
 
     return `
 <!DOCTYPE html>
@@ -557,7 +570,7 @@ export class COAReportsService {
 
     const dataSnapshot = this.buildDataSnapshot(sample as any, 0, context);
     const htmlSnapshot = this.buildHTMLSnapshot(dataSnapshot);
-    
+
     const jsonSnapshot = {
       sample: {
         id: sample.id,
@@ -622,7 +635,11 @@ export class COAReportsService {
     const newVersion = (latestReport?.version || 0) + 1;
 
     // Build the COA
-    const dataSnapshot = this.buildDataSnapshot(sample as any, newVersion, context);
+    const dataSnapshot = this.buildDataSnapshot(
+      sample as any,
+      newVersion,
+      context,
+    );
     const htmlSnapshot = this.buildHTMLSnapshot(dataSnapshot);
 
     // Create the COA report

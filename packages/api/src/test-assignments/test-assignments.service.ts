@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService, AuditContext } from '../audit/audit.service';
 import { TestAssignment, TestAssignmentStatus } from '@prisma/client';
@@ -54,7 +58,9 @@ export class TestAssignmentsService {
     context: AuditContext,
   ): Promise<TestAssignment> {
     // Verify that sample exists
-    const sample = await this.prisma.sample.findUnique({ where: { id: dto.sampleId } });
+    const sample = await this.prisma.sample.findUnique({
+      where: { id: dto.sampleId },
+    });
     if (!sample) {
       throw new NotFoundException(`Sample with ID '${dto.sampleId}' not found`);
     }
@@ -118,7 +124,9 @@ export class TestAssignmentsService {
     context: AuditContext,
   ): Promise<TestAssignment[]> {
     // Verify sample exists
-    const sample = await this.prisma.sample.findUnique({ where: { id: sampleId } });
+    const sample = await this.prisma.sample.findUnique({
+      where: { id: sampleId },
+    });
     if (!sample) {
       throw new NotFoundException(`Sample with ID '${sampleId}' not found`);
     }
@@ -152,10 +160,10 @@ export class TestAssignmentsService {
 
     // Create test assignments for each item in the pack
     const testAssignments: TestAssignment[] = [];
-    
+
     for (const item of testPack.items) {
       const testDef = item.testDefinition;
-      
+
       // Calculate due date
       let dueDate: Date | undefined;
       if (testDef.defaultDueDays) {
@@ -511,7 +519,10 @@ export class TestAssignmentsService {
     if (isNaN(numericResult)) {
       // If result is not numeric, check for exact match with target
       if (specification.target) {
-        return result.trim().toLowerCase() !== specification.target.trim().toLowerCase();
+        return (
+          result.trim().toLowerCase() !==
+          specification.target.trim().toLowerCase()
+        );
       }
       return false;
     }
@@ -532,17 +543,17 @@ export class TestAssignmentsService {
     // Check oosRule if specified
     if (specification.oosRule) {
       const rule = specification.oosRule.toLowerCase();
-      
+
       if (rule.includes('>=')) {
         const threshold = parseFloat(rule.split('>=')[1]);
         return numericResult < threshold;
       }
-      
+
       if (rule.includes('<=')) {
         const threshold = parseFloat(rule.split('<=')[1]);
         return numericResult > threshold;
       }
-      
+
       if (rule.includes('=') || rule.includes('equals')) {
         const target = parseFloat(rule.match(/[\d.]+/)?.[0] || '0');
         return numericResult !== target;

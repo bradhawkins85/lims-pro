@@ -95,7 +95,11 @@ export class SectionsService {
     return section;
   }
 
-  async updateSection(id: string, dto: UpdateSectionDto, context: AuditContext) {
+  async updateSection(
+    id: string,
+    dto: UpdateSectionDto,
+    context: AuditContext,
+  ) {
     const existingSection = await this.prisma.section.findUnique({
       where: { id },
     });

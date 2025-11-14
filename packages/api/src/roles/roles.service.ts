@@ -13,8 +13,7 @@ export class RolesService {
     {
       value: Role.ADMIN,
       label: 'Admin',
-      description:
-        'Full access, manage users/roles, system settings',
+      description: 'Full access, manage users/roles, system settings',
     },
     {
       value: Role.LAB_MANAGER,

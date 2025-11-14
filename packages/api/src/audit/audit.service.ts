@@ -25,7 +25,7 @@ export class AuditService {
     reason?: string,
   ): Promise<void> {
     const changes = this.buildChangesForCreate(newValues);
-    
+
     await this.prisma.auditLog.create({
       data: {
         actorId: context.actorId,
@@ -54,7 +54,7 @@ export class AuditService {
     reason?: string,
   ): Promise<void> {
     const changes = this.buildChangesForUpdate(oldValues, newValues);
-    
+
     // Only log if there are actual changes
     if (Object.keys(changes).length === 0) {
       return;
@@ -119,13 +119,13 @@ export class AuditService {
     perPage?: number;
   }) {
     const where: any = {};
-    
+
     if (filters.table) where.table = filters.table;
     if (filters.recordId) where.recordId = filters.recordId;
     if (filters.actorId) where.actorId = filters.actorId;
     if (filters.action) where.action = filters.action;
     if (filters.txId) where.txId = filters.txId;
-    
+
     if (filters.fromDate || filters.toDate) {
       where.at = {};
       if (filters.fromDate) where.at.gte = filters.fromDate;
@@ -181,19 +181,21 @@ export class AuditService {
    * Build changes object for CREATE action
    * Each field shows null -> newValue
    */
-  private buildChangesForCreate(newValues: Record<string, any>): Record<string, any> {
+  private buildChangesForCreate(
+    newValues: Record<string, any>,
+  ): Record<string, any> {
     const changes: Record<string, any> = {};
-    
+
     for (const [key, value] of Object.entries(newValues)) {
       // Skip system fields that are auto-generated
       if (['id', 'createdAt', 'updatedAt'].includes(key)) continue;
-      
+
       changes[key] = {
         old: null,
         new: this.serializeValue(value),
       };
     }
-    
+
     return changes;
   }
 
@@ -206,13 +208,13 @@ export class AuditService {
     newValues: Record<string, any>,
   ): Record<string, any> {
     const changes: Record<string, any> = {};
-    
+
     for (const [key, newValue] of Object.entries(newValues)) {
       // Skip system fields that are auto-updated
       if (['updatedAt'].includes(key)) continue;
-      
+
       const oldValue = oldValues[key];
-      
+
       // Check if value actually changed
       if (this.hasValueChanged(oldValue, newValue)) {
         changes[key] = {
@@ -221,7 +223,7 @@ export class AuditService {
         };
       }
     }
-    
+
     return changes;
   }
 
@@ -229,19 +231,21 @@ export class AuditService {
    * Build changes object for DELETE action
    * Each field shows oldValue -> null
    */
-  private buildChangesForDelete(oldValues: Record<string, any>): Record<string, any> {
+  private buildChangesForDelete(
+    oldValues: Record<string, any>,
+  ): Record<string, any> {
     const changes: Record<string, any> = {};
-    
+
     for (const [key, value] of Object.entries(oldValues)) {
       // Skip system fields
       if (['createdAt', 'updatedAt'].includes(key)) continue;
-      
+
       changes[key] = {
         old: this.serializeValue(value),
         new: null,
       };
     }
-    
+
     return changes;
   }
 
@@ -252,21 +256,29 @@ export class AuditService {
     // Handle null/undefined
     if (oldValue === null && newValue === null) return false;
     if (oldValue === undefined && newValue === undefined) return false;
-    if ((oldValue === null || oldValue === undefined) && 
-        (newValue !== null && newValue !== undefined)) return true;
-    if ((newValue === null || newValue === undefined) && 
-        (oldValue !== null && oldValue !== undefined)) return true;
-    
+    if (
+      (oldValue === null || oldValue === undefined) &&
+      newValue !== null &&
+      newValue !== undefined
+    )
+      return true;
+    if (
+      (newValue === null || newValue === undefined) &&
+      oldValue !== null &&
+      oldValue !== undefined
+    )
+      return true;
+
     // Handle dates
     if (oldValue instanceof Date && newValue instanceof Date) {
       return oldValue.getTime() !== newValue.getTime();
     }
-    
+
     // Handle objects (deep comparison for simple objects)
     if (typeof oldValue === 'object' && typeof newValue === 'object') {
       return JSON.stringify(oldValue) !== JSON.stringify(newValue);
     }
-    
+
     // Simple value comparison
     return oldValue !== newValue;
   }
@@ -278,15 +290,15 @@ export class AuditService {
     if (value === null || value === undefined) {
       return null;
     }
-    
+
     if (value instanceof Date) {
       return value.toISOString();
     }
-    
+
     if (typeof value === 'object') {
       return JSON.parse(JSON.stringify(value));
     }
-    
+
     return value;
   }
 }

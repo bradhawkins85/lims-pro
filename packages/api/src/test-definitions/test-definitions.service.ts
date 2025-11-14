@@ -130,10 +130,9 @@ export class TestDefinitionsService {
     dto: UpdateTestDefinitionDto,
     context: AuditContext,
   ) {
-    const existingTestDefinition =
-      await this.prisma.testDefinition.findUnique({
-        where: { id },
-      });
+    const existingTestDefinition = await this.prisma.testDefinition.findUnique({
+      where: { id },
+    });
 
     if (!existingTestDefinition) {
       throw new NotFoundException(`TestDefinition with ID ${id} not found`);

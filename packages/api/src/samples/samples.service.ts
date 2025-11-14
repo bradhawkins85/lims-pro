@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService, AuditContext } from '../audit/audit.service';
 import { Sample } from '@prisma/client';
@@ -16,7 +20,7 @@ export interface CreateSampleDto {
   temperatureOnReceiptC?: number;
   storageConditions?: string;
   comments?: string;
-  
+
   // Status flags
   expiredRawMaterial?: boolean;
   postIrradiatedRawMaterial?: boolean;
@@ -38,7 +42,7 @@ export interface UpdateSampleDto {
   temperatureOnReceiptC?: number;
   storageConditions?: string;
   comments?: string;
-  
+
   // Status flags
   expiredRawMaterial?: boolean;
   postIrradiatedRawMaterial?: boolean;
@@ -62,14 +66,19 @@ export class SamplesService {
    * Create a new Sample with sampleCode uniqueness enforcement
    * AC: A newly created Sample produces a create entry in AuditLog with full field set
    */
-  async createSample(dto: CreateSampleDto, context: AuditContext): Promise<Sample> {
+  async createSample(
+    dto: CreateSampleDto,
+    context: AuditContext,
+  ): Promise<Sample> {
     // Check if sampleCode already exists
     const existing = await this.prisma.sample.findUnique({
       where: { sampleCode: dto.sampleCode },
     });
 
     if (existing) {
-      throw new ConflictException(`Sample with sampleCode '${dto.sampleCode}' already exists`);
+      throw new ConflictException(
+        `Sample with sampleCode '${dto.sampleCode}' already exists`,
+      );
     }
 
     // Verify that job and client exist
@@ -78,7 +87,9 @@ export class SamplesService {
       throw new NotFoundException(`Job with ID '${dto.jobId}' not found`);
     }
 
-    const client = await this.prisma.client.findUnique({ where: { id: dto.clientId } });
+    const client = await this.prisma.client.findUnique({
+      where: { id: dto.clientId },
+    });
     if (!client) {
       throw new NotFoundException(`Client with ID '${dto.clientId}' not found`);
     }
@@ -118,12 +129,7 @@ export class SamplesService {
     });
 
     // Log audit entry for sample creation with full field set
-    await this.auditService.logCreate(
-      context,
-      'Sample',
-      sample.id,
-      sample,
-    );
+    await this.auditService.logCreate(context, 'Sample', sample.id, sample);
 
     return sample;
   }
@@ -238,10 +244,14 @@ export class SamplesService {
   /**
    * Update a sample
    */
-  async updateSample(id: string, dto: UpdateSampleDto, context: AuditContext): Promise<Sample> {
+  async updateSample(
+    id: string,
+    dto: UpdateSampleDto,
+    context: AuditContext,
+  ): Promise<Sample> {
     // Get the current sample state for audit logging
     const oldSample = await this.prisma.sample.findUnique({ where: { id } });
-    
+
     if (!oldSample) {
       throw new NotFoundException(`Sample with ID '${id}' not found`);
     }
@@ -279,7 +289,7 @@ export class SamplesService {
    */
   async releaseSample(id: string, context: AuditContext): Promise<Sample> {
     const oldSample = await this.prisma.sample.findUnique({ where: { id } });
-    
+
     if (!oldSample) {
       throw new NotFoundException(`Sample with ID '${id}' not found`);
     }
@@ -317,14 +327,14 @@ export class SamplesService {
    */
   async deleteSample(id: string, context: AuditContext): Promise<Sample> {
     const oldSample = await this.prisma.sample.findUnique({ where: { id } });
-    
+
     if (!oldSample) {
       throw new NotFoundException(`Sample with ID '${id}' not found`);
     }
 
     // For now, we'll just log the deletion but not actually delete the record
     // In a real system, you might want to add a 'deleted' or 'cancelled' field
-    
+
     // Log audit entry for sample deletion
     await this.auditService.logDelete(
       context,
@@ -392,12 +402,10 @@ export class SamplesService {
     );
 
     // Log audit entry
-    await this.auditService.logCreate(
-      context,
-      'Sample',
-      sampleId,
-      { testPackId, testAssignmentsCreated: testAssignments.length },
-    );
+    await this.auditService.logCreate(context, 'Sample', sampleId, {
+      testPackId,
+      testAssignmentsCreated: testAssignments.length,
+    });
 
     return {
       message: `Test pack added successfully with ${testAssignments.length} tests`,

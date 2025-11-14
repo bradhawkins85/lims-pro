@@ -92,10 +92,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Update user role' })
   @ApiResponse({ status: 200, description: 'User role updated successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async updateUserRoles(
-    @Param('id') id: string,
-    @Body() body: { role: Role },
-  ) {
+  async updateUserRoles(@Param('id') id: string, @Body() body: { role: Role }) {
     return this.usersService.updateUserRoles(id, body.role);
   }
 }

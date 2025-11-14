@@ -129,7 +129,11 @@ export class SamplesController {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
     };
-    return this.samplesService.addTestPackToSample(id, body.testPackId, context);
+    return this.samplesService.addTestPackToSample(
+      id,
+      body.testPackId,
+      context,
+    );
   }
 
   @Post(':id/tests')
@@ -146,7 +150,11 @@ export class SamplesController {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
     };
-    return this.samplesService.addTestToSample(id, body.testDefinitionId, context);
+    return this.samplesService.addTestToSample(
+      id,
+      body.testDefinitionId,
+      context,
+    );
   }
 
   @Get(':id/attachments')
