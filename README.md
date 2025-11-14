@@ -140,6 +140,12 @@ Once the API is running, visit:
 - **Swagger UI**: http://localhost:3000/api/docs
 - **Health Check**: http://localhost:3000
 
+### Additional Documentation
+- **[Audit Logging](./AUDIT_LOGGING_DOCUMENTATION.md)**: Comprehensive audit trail system
+- **[API Implementation Summary](./API_IMPLEMENTATION_SUMMARY.md)**: Detailed API documentation
+- **[RBAC Implementation](./RBAC_IMPLEMENTATION_SUMMARY.md)**: Role-based access control
+- **[Workflows API](./WORKFLOWS_API_DOCUMENTATION.md)**: Workflow management
+
 ## 🧪 Testing
 
 Run tests for all packages:
@@ -197,8 +203,21 @@ The system uses Prisma with PostgreSQL. Key models:
 - **Test**: Lab tests performed on samples
 - **Report**: Generated reports with PDF links
 - **Attachment**: File attachments
+- **AuditLog**: Immutable audit trail of all data changes
 
 All models use UUID primary keys and include JSONB fields for flexible metadata and audit snapshots.
+
+## 🔍 Audit Logging
+
+Comprehensive audit trail system that tracks all data changes:
+- **Automatic**: Database triggers log all INSERT/UPDATE/DELETE operations
+- **Immutable**: Audit logs cannot be modified or deleted
+- **Complete Context**: Captures who, what, when, where, and why
+- **Transaction Grouping**: Related changes grouped by transaction ID
+- **API Access**: Query audit logs via REST API with filters
+- **Compliance Ready**: Supports FDA 21 CFR Part 11, ISO 17025, GxP
+
+See [Audit Logging Documentation](./AUDIT_LOGGING_DOCUMENTATION.md) for details.
 
 ## 🐳 Docker Services
 
