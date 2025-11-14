@@ -10,7 +10,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User model with UUID primary key
+// ============================================================================
+// SYSTEM MODELS
+// ============================================================================
+
+// User model with UUID primary key and audit fields
 model User {
   id        String   @id @default(uuid()) @db.Uuid
   email     String   @unique
@@ -20,12 +24,35 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  // Relations
-  samples         Sample[]        @relation("SampleCreator")
-  assignedSamples Sample[]        @relation("AssignedAnalyst")
-  tests           Test[]
-  reports         Report[]
-  clientSamples   Sample[]        @relation("ClientSamples")
+  // Relations - records created/updated by this user
+  createdClients       Client[]          @relation("ClientCreatedBy")
+  updatedClients       Client[]          @relation("ClientUpdatedBy")
+  createdMethods       Method[]          @relation("MethodCreatedBy")
+  updatedMethods       Method[]          @relation("MethodUpdatedBy")
+  createdSpecifications Specification[]  @relation("SpecificationCreatedBy")
+  updatedSpecifications Specification[]  @relation("SpecificationUpdatedBy")
+  createdSections      Section[]         @relation("SectionCreatedBy")
+  updatedSections      Section[]         @relation("SectionUpdatedBy")
+  createdTestDefinitions TestDefinition[] @relation("TestDefinitionCreatedBy")
+  updatedTestDefinitions TestDefinition[] @relation("TestDefinitionUpdatedBy")
+  createdTestPacks     TestPack[]        @relation("TestPackCreatedBy")
+  updatedTestPacks     TestPack[]        @relation("TestPackUpdatedBy")
+  createdJobs          Job[]             @relation("JobCreatedBy")
+  updatedJobs          Job[]             @relation("JobUpdatedBy")
+  createdSamples       Sample[]          @relation("SampleCreatedBy")
+  updatedSamples       Sample[]          @relation("SampleUpdatedBy")
+  createdTestAssignments TestAssignment[] @relation("TestAssignmentCreatedBy")
+  updatedTestAssignments TestAssignment[] @relation("TestAssignmentUpdatedBy")
+  createdAttachments   Attachment[]      @relation("AttachmentCreatedBy")
+  updatedAttachments   Attachment[]      @relation("AttachmentUpdatedBy")
+  createdCOAReports    COAReport[]       @relation("COAReportCreatedBy")
+  updatedCOAReports    COAReport[]       @relation("COAReportUpdatedBy")
+  
+  // Relations - functional relationships
+  assignedTestAssignments TestAssignment[] @relation("TestAssignmentAnalyst")
+  checkedTestAssignments  TestAssignment[] @relation("TestAssignmentChecker")
+  reportedCOAReports      COAReport[]      @relation("COAReportReporter")
+  approvedCOAReports      COAReport[]      @relation("COAReportApprover")
 }
 
 // Role enum for RBAC - 5 system roles
@@ -37,140 +64,444 @@ enum Role {
   CLIENT            // Portal view of their Samples, results, and final COAs only (read-only)
 }
 
-// Sample model
-model Sample {
-  id          String   @id @default(uuid()) @db.Uuid
-  sampleId    String   @unique
-  type        String
-  status      SampleStatus @default(RECEIVED)
-  metadata    Json?    // JSONB for flexible metadata (including accounting fields, quotes, PO, SO, invoice flags)
-  snapshot    Json?    // JSONB for audit snapshots
-  receivedAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// ============================================================================
+// MASTER DATA MODELS
+// ============================================================================
+
+// Client master data
+model Client {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  contactName  String?
+  email        String?
+  phone        String?
+  address      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdById  String   @db.Uuid
+  updatedById  String   @db.Uuid
+  
+  createdBy    User     @relation("ClientCreatedBy", fields: [createdById], references: [id])
+  updatedBy    User     @relation("ClientUpdatedBy", fields: [updatedById], references: [id])
   
   // Relations
-  userId         String   @db.Uuid
-  user           User     @relation("SampleCreator", fields: [userId], references: [id])
+  jobs         Job[]
+  samples      Sample[]
   
-  // Assigned analyst for this sample
-  assignedUserId String?  @db.Uuid
-  assignedUser   User?    @relation("AssignedAnalyst", fields: [assignedUserId], references: [id])
+  @@index([name])
+  @@index([email])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+// Method master data (testing method)
+model Method {
+  id           String   @id @default(uuid()) @db.Uuid
+  code         String   @unique
+  name         String
+  description  String?
+  unit         String?
+  lod          Float?   // Limit of Detection
+  loq          Float?   // Limit of Quantification
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdById  String   @db.Uuid
+  updatedById  String   @db.Uuid
   
-  // Client who owns this sample (for portal access)
-  clientId       String?  @db.Uuid
-  client         User?    @relation("ClientSamples", fields: [clientId], references: [id])
+  createdBy    User     @relation("MethodCreatedBy", fields: [createdById], references: [id])
+  updatedBy    User     @relation("MethodUpdatedBy", fields: [updatedById], references: [id])
   
-  tests          Test[]
+  // Relations
+  testDefinitions TestDefinition[]
+  testAssignments TestAssignment[]
   
-  @@index([userId])
-  @@index([assignedUserId])
+  @@index([code])
+  @@index([name])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+// Specification master data (acceptance criteria)
+model Specification {
+  id           String   @id @default(uuid()) @db.Uuid
+  code         String   @unique
+  name         String
+  target       String?  // Target value
+  min          Float?   // Minimum acceptable value
+  max          Float?   // Maximum acceptable value
+  unit         String?
+  oosRule      String?  // Out-of-specification rule (formula or comparator)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdById  String   @db.Uuid
+  updatedById  String   @db.Uuid
+  
+  createdBy    User     @relation("SpecificationCreatedBy", fields: [createdById], references: [id])
+  updatedBy    User     @relation("SpecificationUpdatedBy", fields: [updatedById], references: [id])
+  
+  // Relations
+  testDefinitions TestDefinition[]
+  testAssignments TestAssignment[]
+  
+  @@index([code])
+  @@index([name])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+// Section master data (lab section/department)
+model Section {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdById  String   @db.Uuid
+  updatedById  String   @db.Uuid
+  
+  createdBy    User     @relation("SectionCreatedBy", fields: [createdById], references: [id])
+  updatedBy    User     @relation("SectionUpdatedBy", fields: [updatedById], references: [id])
+  
+  // Relations
+  testDefinitions TestDefinition[]
+  testAssignments TestAssignment[]
+  
+  @@index([name])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+// TestDefinition master data (defines a type of test)
+model TestDefinition {
+  id              String         @id @default(uuid()) @db.Uuid
+  name            String
+  defaultDueDays  Int?           // Default number of days until test is due
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  createdById     String         @db.Uuid
+  updatedById     String         @db.Uuid
+  
+  // Foreign keys
+  sectionId       String         @db.Uuid
+  methodId        String         @db.Uuid
+  specificationId String?        @db.Uuid
+  
+  createdBy       User           @relation("TestDefinitionCreatedBy", fields: [createdById], references: [id])
+  updatedBy       User           @relation("TestDefinitionUpdatedBy", fields: [updatedById], references: [id])
+  section         Section        @relation(fields: [sectionId], references: [id])
+  method          Method         @relation(fields: [methodId], references: [id])
+  specification   Specification? @relation(fields: [specificationId], references: [id])
+  
+  // Relations
+  testPackItems   TestPackItem[]
+  testAssignments TestAssignment[]
+  
+  @@index([name])
+  @@index([sectionId])
+  @@index([methodId])
+  @@index([specificationId])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+// TestPack master data (bundle of tests)
+model TestPack {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdById  String   @db.Uuid
+  updatedById  String   @db.Uuid
+  
+  createdBy    User     @relation("TestPackCreatedBy", fields: [createdById], references: [id])
+  updatedBy    User     @relation("TestPackUpdatedBy", fields: [updatedById], references: [id])
+  
+  // Relations
+  items        TestPackItem[]
+  
+  @@index([name])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+// TestPackItem (many-to-many relationship between TestPack and TestDefinition)
+model TestPackItem {
+  id               String         @id @default(uuid()) @db.Uuid
+  order            Int            // Display order within the pack
+  
+  testPackId       String         @db.Uuid
+  testDefinitionId String         @db.Uuid
+  
+  testPack         TestPack       @relation(fields: [testPackId], references: [id], onDelete: Cascade)
+  testDefinition   TestDefinition @relation(fields: [testDefinitionId], references: [id])
+  
+  @@unique([testPackId, testDefinitionId])
+  @@index([testPackId])
+  @@index([testDefinitionId])
+  @@index([order])
+}
+
+// ============================================================================
+// OPERATIONAL MODELS
+// ============================================================================
+
+// Job (work order/project)
+model Job {
+  id           String   @id @default(uuid()) @db.Uuid
+  jobNumber    String   @unique
+  needByDate   DateTime?
+  mcdDate      DateTime? // Manufacturing/Completion Date
+  status       JobStatus @default(DRAFT)
+  quoteNumber  String?
+  poNumber     String?   // Purchase Order number
+  soNumber     String?   // Sales Order number
+  amountExTax  Decimal?  @db.Decimal(12, 2)
+  invoiced     Boolean   @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdById  String   @db.Uuid
+  updatedById  String   @db.Uuid
+  
+  // Foreign keys
+  clientId     String   @db.Uuid
+  
+  createdBy    User     @relation("JobCreatedBy", fields: [createdById], references: [id])
+  updatedBy    User     @relation("JobUpdatedBy", fields: [updatedById], references: [id])
+  client       Client   @relation(fields: [clientId], references: [id])
+  
+  // Relations
+  samples      Sample[]
+  
+  @@index([jobNumber])
   @@index([clientId])
   @@index([status])
+  @@index([createdById])
+  @@index([updatedById])
 }
 
-enum SampleStatus {
-  RECEIVED
-  IN_PROGRESS
+enum JobStatus {
+  DRAFT
+  ACTIVE
   COMPLETED
-  REJECTED
+  CANCELLED
 }
 
-// Test model
-model Test {
-  id          String   @id @default(uuid()) @db.Uuid
-  testName    String
-  result      String?
-  status      TestStatus @default(PENDING)
-  metadata    Json?    // JSONB for test parameters
-  snapshot    Json?    // JSONB for audit snapshots
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  completedAt DateTime?
+// Sample (lab sample belonging to a Job)
+model Sample {
+  id                            String   @id @default(uuid()) @db.Uuid
+  dateReceived                  DateTime @default(now())
+  dateDue                       DateTime?
+  sampleCode                    String   @unique
+  rmSupplier                    String?  // Raw Material Supplier
+  sampleDescription             String?
+  uinCode                       String?  // Universal Identification Number
+  sampleBatch                   String?
+  temperatureOnReceiptC         Decimal? @db.Decimal(5, 2)
+  storageConditions             String?
+  comments                      String?  @db.Text
+  
+  // Status flags
+  expiredRawMaterial            Boolean  @default(false)
+  postIrradiatedRawMaterial     Boolean  @default(false)
+  stabilityStudy                Boolean  @default(false)
+  urgent                        Boolean  @default(false)
+  allMicroTestsAssigned         Boolean  @default(false)
+  allChemistryTestsAssigned     Boolean  @default(false)
+  released                      Boolean  @default(false)
+  retest                        Boolean  @default(false)
+  releaseDate                   DateTime?
+  
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
+  createdById                   String   @db.Uuid
+  updatedById                   String   @db.Uuid
+  
+  // Foreign keys
+  jobId                         String   @db.Uuid
+  clientId                      String   @db.Uuid
+  
+  createdBy                     User     @relation("SampleCreatedBy", fields: [createdById], references: [id])
+  updatedBy                     User     @relation("SampleUpdatedBy", fields: [updatedById], references: [id])
+  job                           Job      @relation(fields: [jobId], references: [id])
+  client                        Client   @relation(fields: [clientId], references: [id])
   
   // Relations
-  sampleId    String   @db.Uuid
-  sample      Sample   @relation(fields: [sampleId], references: [id])
-  userId      String   @db.Uuid
-  user        User     @relation(fields: [userId], references: [id])
-  reports     Report[]
+  testAssignments               TestAssignment[]
+  attachments                   Attachment[]
+  coaReports                    COAReport[]
+  
+  @@index([sampleCode])
+  @@index([jobId])
+  @@index([clientId])
+  @@index([dateReceived])
+  @@index([dateDue])
+  @@index([released])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+// TestAssignment (a specific test performed on a sample)
+model TestAssignment {
+  id               String               @id @default(uuid()) @db.Uuid
+  customTestName   String?              // Custom test name if not using TestDefinition
+  dueDate          DateTime?
+  status           TestAssignmentStatus @default(DRAFT)
+  testDate         DateTime?
+  result           String?              // Can store string or numeric result
+  resultUnit       String?
+  oos              Boolean              @default(false) // Out of specification
+  comments         String?              @db.Text
+  invoiceNote      String?
+  precision        String?              // Precision information
+  linearity        String?              // Linearity information
+  chkDate          DateTime?            // Check/review date
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  createdById      String               @db.Uuid
+  updatedById      String               @db.Uuid
+  
+  // Foreign keys
+  sampleId         String               @db.Uuid
+  sectionId        String               @db.Uuid
+  methodId         String               @db.Uuid
+  specificationId  String?              @db.Uuid
+  testDefinitionId String?              @db.Uuid
+  analystId        String?              @db.Uuid
+  chkById          String?              @db.Uuid // Checked by (reviewer)
+  
+  createdBy        User                 @relation("TestAssignmentCreatedBy", fields: [createdById], references: [id])
+  updatedBy        User                 @relation("TestAssignmentUpdatedBy", fields: [updatedById], references: [id])
+  sample           Sample               @relation(fields: [sampleId], references: [id])
+  section          Section              @relation(fields: [sectionId], references: [id])
+  method           Method               @relation(fields: [methodId], references: [id])
+  specification    Specification?       @relation(fields: [specificationId], references: [id])
+  testDefinition   TestDefinition?      @relation(fields: [testDefinitionId], references: [id])
+  analyst          User?                @relation("TestAssignmentAnalyst", fields: [analystId], references: [id])
+  checker          User?                @relation("TestAssignmentChecker", fields: [chkById], references: [id])
+  
+  // Relations
+  attachments      Attachment[]
   
   @@index([sampleId])
-  @@index([userId])
+  @@index([sectionId])
+  @@index([methodId])
+  @@index([specificationId])
+  @@index([testDefinitionId])
+  @@index([analystId])
+  @@index([chkById])
   @@index([status])
+  @@index([testDate])
+  @@index([createdById])
+  @@index([updatedById])
 }
 
-enum TestStatus {
-  PENDING
+enum TestAssignmentStatus {
+  DRAFT
   IN_PROGRESS
   COMPLETED
-  FAILED
-  APPROVED      // Approved by Lab Manager
-  RELEASED      // Released by Lab Manager
+  REVIEWED
+  RELEASED
 }
 
-// Report (COA) model
-model Report {
-  id          String       @id @default(uuid()) @db.Uuid
-  title       String
-  pdfUrl      String?
-  status      ReportStatus @default(DRAFT)
-  version     Int          @default(1)
-  metadata    Json?        // JSONB for report metadata
-  snapshot    Json?        // JSONB for audit snapshots
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  finalizedAt DateTime?    // When finalized by Lab Manager
-  releasedAt  DateTime?    // When released by Lab Manager
-  
-  // Relations
-  testId      String   @db.Uuid
-  test        Test     @relation(fields: [testId], references: [id])
-  userId      String   @db.Uuid
-  user        User     @relation(fields: [userId], references: [id])
-  
-  @@index([testId])
-  @@index([userId])
-  @@index([status])
-}
-
-enum ReportStatus {
-  DRAFT         // Created by Analyst
-  FINALIZED     // Finalized by Lab Manager
-  RELEASED      // Released by Lab Manager - visible to clients
-}
-
-// File attachment model
+// Attachment (file linked to Sample or TestAssignment)
 model Attachment {
-  id          String   @id @default(uuid()) @db.Uuid
-  fileName    String
-  fileUrl     String
-  fileSize    Int
-  mimeType    String
-  metadata    Json?    // JSONB for file metadata
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String          @id @default(uuid()) @db.Uuid
+  fileName         String
+  fileUrl          String
+  fileSize         Int
+  mimeType         String
+  metadata         Json?           // JSONB for file metadata
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  createdById      String          @db.Uuid
+  updatedById      String          @db.Uuid
+  
+  // Foreign keys (optional - can be linked to either Sample or TestAssignment or both)
+  sampleId         String?         @db.Uuid
+  testAssignmentId String?         @db.Uuid
+  
+  createdBy        User            @relation("AttachmentCreatedBy", fields: [createdById], references: [id])
+  updatedBy        User            @relation("AttachmentUpdatedBy", fields: [updatedById], references: [id])
+  sample           Sample?         @relation(fields: [sampleId], references: [id])
+  testAssignment   TestAssignment? @relation(fields: [testAssignmentId], references: [id])
   
   @@index([fileName])
+  @@index([sampleId])
+  @@index([testAssignmentId])
+  @@index([createdById])
+  @@index([updatedById])
 }
 
-// Audit Log model - read-only for tracking all system actions
+// COAReport (Certificate of Analysis - version-controlled immutable record)
+model COAReport {
+  id              String           @id @default(uuid()) @db.Uuid
+  version         Int              @default(1)
+  status          COAReportStatus  @default(DRAFT)
+  dataSnapshot    Json             // JSONB - all values used to render PDF
+  htmlSnapshot    String?          @db.Text // HTML used to generate PDF
+  pdfKey          String?          // S3/MinIO path to PDF file
+  reportedAt      DateTime?        // When report was generated
+  notes           String?          @db.Text
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  createdById     String           @db.Uuid
+  updatedById     String           @db.Uuid
+  
+  // Foreign keys
+  sampleId        String           @db.Uuid
+  reportedById    String?          @db.Uuid
+  approvedById    String?          @db.Uuid
+  
+  createdBy       User             @relation("COAReportCreatedBy", fields: [createdById], references: [id])
+  updatedBy       User             @relation("COAReportUpdatedBy", fields: [updatedById], references: [id])
+  sample          Sample           @relation(fields: [sampleId], references: [id])
+  reportedBy      User?            @relation("COAReportReporter", fields: [reportedById], references: [id])
+  approvedBy      User?            @relation("COAReportApprover", fields: [approvedById], references: [id])
+  
+  @@index([sampleId])
+  @@index([version])
+  @@index([status])
+  @@index([reportedAt])
+  @@index([reportedById])
+  @@index([approvedById])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+enum COAReportStatus {
+  DRAFT
+  FINAL
+  SUPERSEDED
+}
+
+// ============================================================================
+// AUDIT LOG MODEL
+// ============================================================================
+
+// AuditLog - immutable log of all system actions
 model AuditLog {
   id          String   @id @default(uuid()) @db.Uuid
-  action      String   // Action performed (CREATE, UPDATE, DELETE, APPROVE, RELEASE, etc.)
-  resource    String   // Resource type (SAMPLE, TEST, REPORT, USER, etc.)
-  resourceId  String?  @db.Uuid // ID of the affected resource
-  userId      String   @db.Uuid // User who performed the action
-  userName    String   // Snapshot of user name at time of action
-  userRole    String   // Snapshot of user role at time of action
-  changes     Json?    // JSONB snapshot of what changed
-  metadata    Json?    // Additional context
-  ipAddress   String?  // IP address of request
-  userAgent   String?  // User agent of request
-  createdAt   DateTime @default(now())
+  actorId     String   @db.Uuid
+  actorEmail  String
+  ip          String?
+  userAgent   String?
+  action      AuditAction
+  table       String   // Table/entity name
+  recordId    String   @db.Uuid
+  changes     Json?    // JSONB map of {field: {old, new}}
+  reason      String?
+  at          DateTime @default(now())
+  txId        String?  // Transaction ID to group related changes
   
-  @@index([userId])
-  @@index([resource])
-  @@index([resourceId])
-  @@index([createdAt])
+  @@index([actorId])
+  @@index([action])
+  @@index([table])
+  @@index([recordId])
+  @@index([at])
+  @@index([txId])
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
 }
