@@ -394,6 +394,8 @@ model TestAssignment {
   @@index([testDate])
   @@index([createdById])
   @@index([updatedById])
+  @@index([oos]) // Performance: Index on out-of-specification flag
+  @@index([sampleId, status]) // Performance: Compound index for filtering tests by sample and status
 }
 
 enum TestAssignmentStatus {

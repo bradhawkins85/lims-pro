@@ -6,54 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService, AuditContext } from '../audit/audit.service';
 import { Sample } from '@prisma/client';
-
-export interface CreateSampleDto {
-  jobId: string;
-  clientId: string;
-  sampleCode: string;
-  dateReceived?: Date;
-  dateDue?: Date;
-  rmSupplier?: string;
-  sampleDescription?: string;
-  uinCode?: string;
-  sampleBatch?: string;
-  temperatureOnReceiptC?: number;
-  storageConditions?: string;
-  comments?: string;
-
-  // Status flags
-  expiredRawMaterial?: boolean;
-  postIrradiatedRawMaterial?: boolean;
-  stabilityStudy?: boolean;
-  urgent?: boolean;
-  allMicroTestsAssigned?: boolean;
-  allChemistryTestsAssigned?: boolean;
-  released?: boolean;
-  retest?: boolean;
-}
-
-export interface UpdateSampleDto {
-  dateReceived?: Date;
-  dateDue?: Date;
-  rmSupplier?: string;
-  sampleDescription?: string;
-  uinCode?: string;
-  sampleBatch?: string;
-  temperatureOnReceiptC?: number;
-  storageConditions?: string;
-  comments?: string;
-
-  // Status flags
-  expiredRawMaterial?: boolean;
-  postIrradiatedRawMaterial?: boolean;
-  stabilityStudy?: boolean;
-  urgent?: boolean;
-  allMicroTestsAssigned?: boolean;
-  allChemistryTestsAssigned?: boolean;
-  released?: boolean;
-  retest?: boolean;
-  releaseDate?: Date;
-}
+import { CreateSampleDto, UpdateSampleDto } from './dto';
 
 @Injectable()
 export class SamplesService {
@@ -100,8 +53,8 @@ export class SamplesService {
         jobId: dto.jobId,
         clientId: dto.clientId,
         sampleCode: dto.sampleCode,
-        dateReceived: dto.dateReceived || new Date(),
-        dateDue: dto.dateDue,
+        dateReceived: dto.dateReceived ? new Date(dto.dateReceived) : new Date(),
+        dateDue: dto.dateDue ? new Date(dto.dateDue) : null,
         rmSupplier: dto.rmSupplier,
         sampleDescription: dto.sampleDescription,
         uinCode: dto.uinCode,
@@ -260,7 +213,24 @@ export class SamplesService {
     const sample = await this.prisma.sample.update({
       where: { id },
       data: {
-        ...dto,
+        ...(dto.dateReceived && { dateReceived: new Date(dto.dateReceived) }),
+        ...(dto.dateDue && { dateDue: new Date(dto.dateDue) }),
+        ...(dto.releaseDate && { releaseDate: new Date(dto.releaseDate) }),
+        ...(dto.rmSupplier !== undefined && { rmSupplier: dto.rmSupplier }),
+        ...(dto.sampleDescription !== undefined && { sampleDescription: dto.sampleDescription }),
+        ...(dto.uinCode !== undefined && { uinCode: dto.uinCode }),
+        ...(dto.sampleBatch !== undefined && { sampleBatch: dto.sampleBatch }),
+        ...(dto.temperatureOnReceiptC !== undefined && { temperatureOnReceiptC: dto.temperatureOnReceiptC }),
+        ...(dto.storageConditions !== undefined && { storageConditions: dto.storageConditions }),
+        ...(dto.comments !== undefined && { comments: dto.comments }),
+        ...(dto.expiredRawMaterial !== undefined && { expiredRawMaterial: dto.expiredRawMaterial }),
+        ...(dto.postIrradiatedRawMaterial !== undefined && { postIrradiatedRawMaterial: dto.postIrradiatedRawMaterial }),
+        ...(dto.stabilityStudy !== undefined && { stabilityStudy: dto.stabilityStudy }),
+        ...(dto.urgent !== undefined && { urgent: dto.urgent }),
+        ...(dto.allMicroTestsAssigned !== undefined && { allMicroTestsAssigned: dto.allMicroTestsAssigned }),
+        ...(dto.allChemistryTestsAssigned !== undefined && { allChemistryTestsAssigned: dto.allChemistryTestsAssigned }),
+        ...(dto.released !== undefined && { released: dto.released }),
+        ...(dto.retest !== undefined && { retest: dto.retest }),
         updatedById: context.actorId,
       },
       include: {

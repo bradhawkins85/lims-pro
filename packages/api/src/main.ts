@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -10,18 +11,37 @@ async function bootstrap() {
   // Use Pino logger
   app.useLogger(app.get(Logger));
 
+  // Security: Add Helmet for security headers (OWASP ASVS L2)
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
+      },
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
+
   // Enable CORS
   app.enableCors({
     origin: process.env.WEB_URL || 'http://localhost:3002',
     credentials: true,
   });
 
-  // Global validation pipe
+  // Global validation pipe with input validation (OWASP ASVS L2)
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
+      whitelist: true, // Strip properties that are not in the DTO
+      transform: true, // Transform payloads to DTO instances
+      forbidNonWhitelisted: true, // Throw error if non-whitelisted properties are present
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
 

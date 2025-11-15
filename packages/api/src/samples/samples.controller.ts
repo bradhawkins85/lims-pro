@@ -16,7 +16,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { SamplesService } from './samples.service';
-import type { CreateSampleDto, UpdateSampleDto } from './samples.service';
+import { CreateSampleDto, UpdateSampleDto } from './dto';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
 import type { Request } from 'express';
