@@ -24,6 +24,11 @@ out
 .env.local
 .env.*.local
 
+# Backups
+backups/
+*.sql.gz
+*.tar.gz
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
