@@ -26,8 +26,8 @@ export class LabSettingsService {
    * If no settings exist, create default settings
    */
   async getSettings(): Promise<LabSettings | null> {
-    let settings = await this.prisma.labSettings.findFirst();
-    
+    const settings = await this.prisma.labSettings.findFirst();
+
     // If no settings exist, this is handled at the application level
     // The service will return null and the caller should handle creating default settings
     return settings;
@@ -98,17 +98,18 @@ export class LabSettingsService {
    */
   async getOrCreateSettings(context: AuditContext): Promise<LabSettings> {
     let settings = await this.getSettings();
-    
+
     if (!settings) {
       settings = await this.updateSettings(
         {
           labName: 'Laboratory LIMS Pro',
-          disclaimerText: 'This Certificate of Analysis is for the sample as received and tested. Results apply only to the sample tested.',
+          disclaimerText:
+            'This Certificate of Analysis is for the sample as received and tested. Results apply only to the sample tested.',
         },
         context,
       );
     }
-    
+
     return settings;
   }
 }

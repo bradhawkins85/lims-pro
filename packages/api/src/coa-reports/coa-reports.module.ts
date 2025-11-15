@@ -8,7 +8,13 @@ import { StorageModule } from '../storage/storage.module';
 import { LabSettingsModule } from '../lab-settings/lab-settings.module';
 
 @Module({
-  imports: [PrismaModule, AuditModule, PdfModule, StorageModule, LabSettingsModule],
+  imports: [
+    PrismaModule,
+    AuditModule,
+    PdfModule,
+    StorageModule,
+    LabSettingsModule,
+  ],
   providers: [COAReportsService],
   controllers: [COAReportsController],
   exports: [COAReportsService],

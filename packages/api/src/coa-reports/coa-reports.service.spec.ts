@@ -58,7 +58,8 @@ describe('COAReportsService - Versioning', () => {
       id: 'settings-123',
       labName: 'Laboratory LIMS Pro',
       labLogoUrl: null,
-      disclaimerText: 'This Certificate of Analysis is for the sample as received and tested. Results apply only to the sample tested.',
+      disclaimerText:
+        'This Certificate of Analysis is for the sample as received and tested. Results apply only to the sample tested.',
       coaTemplateSettings: null,
       createdAt: new Date(),
       updatedAt: new Date(),

@@ -141,7 +141,11 @@ export class COAReportsService {
     const nextVersion = latestReport ? latestReport.version + 1 : 1;
 
     // Build data snapshot
-    const dataSnapshot = await this.buildDataSnapshot(sample, nextVersion, context);
+    const dataSnapshot = await this.buildDataSnapshot(
+      sample,
+      nextVersion,
+      context,
+    );
 
     // Build HTML snapshot
     const htmlSnapshot = this.buildHTMLSnapshot(dataSnapshot);
@@ -372,8 +376,9 @@ export class COAReportsService {
     context: AuditContext,
   ): Promise<COADataSnapshot> {
     // Get lab settings
-    const labSettings = await this.labSettingsService.getOrCreateSettings(context);
-    
+    const labSettings =
+      await this.labSettingsService.getOrCreateSettings(context);
+
     return {
       sample: {
         jobNumber: sample.job.jobNumber,
@@ -451,8 +456,12 @@ export class COAReportsService {
         generatedBy: context.actorEmail,
         labName: labSettings?.labName || 'Laboratory LIMS Pro',
         labLogoUrl: labSettings?.labLogoUrl || undefined,
-        disclaimerText: labSettings?.disclaimerText || 'This Certificate of Analysis is for the sample as received and tested. Results apply only to the sample tested.',
-        templateSettings: labSettings?.coaTemplateSettings as COATemplateSettings || undefined,
+        disclaimerText:
+          labSettings?.disclaimerText ||
+          'This Certificate of Analysis is for the sample as received and tested. Results apply only to the sample tested.',
+        templateSettings:
+          (labSettings?.coaTemplateSettings as COATemplateSettings) ||
+          undefined,
       },
     };
   }
@@ -463,12 +472,14 @@ export class COAReportsService {
    */
   private buildHTMLSnapshot(dataSnapshot: COADataSnapshot): string {
     const { sample, tests, reportMetadata } = dataSnapshot;
-    
+
     // Helper function to get label with override support
     const getLabel = (field: string, defaultLabel: string): string => {
-      return reportMetadata.templateSettings?.labelOverrides?.[field] || defaultLabel;
+      return (
+        reportMetadata.templateSettings?.labelOverrides?.[field] || defaultLabel
+      );
     };
-    
+
     // Helper function to check if field should be visible
     const isVisible = (field: string): boolean => {
       const visibleFields = reportMetadata.templateSettings?.visibleFields;
@@ -476,13 +487,25 @@ export class COAReportsService {
       if (!visibleFields || visibleFields.length === 0) return true;
       return visibleFields.includes(field);
     };
-    
+
     // Helper function to get column order
     const getColumnOrder = (): string[] => {
-      return reportMetadata.templateSettings?.columnOrder || [
-        'section', 'test', 'method', 'specification', 'result', 'unit',
-        'testDate', 'analyst', 'checkedBy', 'checkedDate', 'oos', 'comments'
-      ];
+      return (
+        reportMetadata.templateSettings?.columnOrder || [
+          'section',
+          'test',
+          'method',
+          'specification',
+          'result',
+          'unit',
+          'testDate',
+          'analyst',
+          'checkedBy',
+          'checkedDate',
+          'oos',
+          'comments',
+        ]
+      );
     };
 
     // Build client info
@@ -514,74 +537,83 @@ export class COAReportsService {
 
     // Build tests table with improved column structure and dynamic ordering
     const columnOrder = getColumnOrder();
-    
+
     // Map of column keys to their data accessors and headers
-    const columnDefinitions: Record<string, { header: string; getValue: (test: any) => string }> = {
-      section: { 
-        header: getLabel('section', 'Section'), 
-        getValue: (test) => test.section.name 
+    const columnDefinitions: Record<
+      string,
+      { header: string; getValue: (test: any) => string }
+    > = {
+      section: {
+        header: getLabel('section', 'Section'),
+        getValue: (test) => test.section.name,
       },
-      test: { 
-        header: getLabel('test', 'Test'), 
-        getValue: (test) => test.testName 
+      test: {
+        header: getLabel('test', 'Test'),
+        getValue: (test) => test.testName,
       },
-      method: { 
-        header: getLabel('method', 'Method'), 
-        getValue: (test) => `${test.method.code}<br/><span class="method-name">${test.method.name}</span>` 
+      method: {
+        header: getLabel('method', 'Method'),
+        getValue: (test) =>
+          `${test.method.code}<br/><span class="method-name">${test.method.name}</span>`,
       },
-      specification: { 
-        header: getLabel('specification', 'Specification'), 
-        getValue: (test) => test.specification 
-          ? `${test.specification.name}<br/><span class="spec-range">${test.specification.min || ''} - ${test.specification.max || ''} ${test.specification.unit || ''}</span>` 
-          : 'N/A' 
+      specification: {
+        header: getLabel('specification', 'Specification'),
+        getValue: (test) =>
+          test.specification
+            ? `${test.specification.name}<br/><span class="spec-range">${test.specification.min || ''} - ${test.specification.max || ''} ${test.specification.unit || ''}</span>`
+            : 'N/A',
       },
-      result: { 
-        header: getLabel('result', 'Result'), 
-        getValue: (test) => test.result || 'N/A' 
+      result: {
+        header: getLabel('result', 'Result'),
+        getValue: (test) => test.result || 'N/A',
       },
-      unit: { 
-        header: getLabel('unit', 'Unit'), 
-        getValue: (test) => test.resultUnit || test.method.unit || '' 
+      unit: {
+        header: getLabel('unit', 'Unit'),
+        getValue: (test) => test.resultUnit || test.method.unit || '',
       },
-      testDate: { 
-        header: getLabel('testDate', 'Test Date'), 
-        getValue: (test) => test.testDate ? new Date(test.testDate).toLocaleDateString() : 'N/A' 
+      testDate: {
+        header: getLabel('testDate', 'Test Date'),
+        getValue: (test) =>
+          test.testDate ? new Date(test.testDate).toLocaleDateString() : 'N/A',
       },
-      analyst: { 
-        header: getLabel('analyst', 'Analyst'), 
-        getValue: (test) => test.analyst?.name || 'N/A' 
+      analyst: {
+        header: getLabel('analyst', 'Analyst'),
+        getValue: (test) => test.analyst?.name || 'N/A',
       },
-      checkedBy: { 
-        header: getLabel('checkedBy', 'Checked By'), 
-        getValue: (test) => test.checker?.name || 'N/A' 
+      checkedBy: {
+        header: getLabel('checkedBy', 'Checked By'),
+        getValue: (test) => test.checker?.name || 'N/A',
       },
-      checkedDate: { 
-        header: getLabel('checkedDate', 'Checked Date'), 
-        getValue: (test) => test.chkDate ? new Date(test.chkDate).toLocaleDateString() : 'N/A' 
+      checkedDate: {
+        header: getLabel('checkedDate', 'Checked Date'),
+        getValue: (test) =>
+          test.chkDate ? new Date(test.chkDate).toLocaleDateString() : 'N/A',
       },
-      oos: { 
-        header: getLabel('oos', 'OOS'), 
-        getValue: (test) => `<span class="${test.oos ? 'oos-yes' : ''}">${test.oos ? 'YES' : 'No'}</span>` 
+      oos: {
+        header: getLabel('oos', 'OOS'),
+        getValue: (test) =>
+          `<span class="${test.oos ? 'oos-yes' : ''}">${test.oos ? 'YES' : 'No'}</span>`,
       },
-      comments: { 
-        header: getLabel('comments', 'Comments'), 
-        getValue: (test) => test.comments || '' 
+      comments: {
+        header: getLabel('comments', 'Comments'),
+        getValue: (test) => test.comments || '',
       },
     };
-    
+
     // Generate table headers based on column order
     const tableHeaders = columnOrder
-      .filter(col => isVisible(col) && columnDefinitions[col])
-      .map(col => `<th>${columnDefinitions[col].header}</th>`)
+      .filter((col) => isVisible(col) && columnDefinitions[col])
+      .map((col) => `<th>${columnDefinitions[col].header}</th>`)
       .join('');
-    
+
     // Generate table rows based on column order
     const testsTableRows = tests
-      .map(test => {
+      .map((test) => {
         const cells = columnOrder
-          .filter(col => isVisible(col) && columnDefinitions[col])
-          .map(col => {
-            const cellClass = col === 'comments' ? ' class="comments-cell"' : '';
+          .filter((col) => isVisible(col) && columnDefinitions[col])
+          .map((col) => {
+            const cellClass =
+              col === 'comments' ? ' class="comments-cell"' : '';
             return `<td${cellClass}>${columnDefinitions[col].getValue(test)}</td>`;
           })
           .join('');
@@ -890,7 +922,11 @@ export class COAReportsService {
       throw new Error(`Sample with ID '${sampleId}' not found`);
     }
 
-    const dataSnapshot = await this.buildDataSnapshot(sample as any, 0, context);
+    const dataSnapshot = await this.buildDataSnapshot(
+      sample as any,
+      0,
+      context,
+    );
     const htmlSnapshot = this.buildHTMLSnapshot(dataSnapshot);
 
     const jsonSnapshot = {

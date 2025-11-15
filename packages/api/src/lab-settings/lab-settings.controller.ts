@@ -18,9 +18,18 @@ export class LabSettingsController {
   constructor(private labSettingsService: LabSettingsService) {}
 
   @Get()
-  @Roles(Role.ADMIN, Role.LAB_MANAGER, Role.ANALYST, Role.SALES_ACCOUNTING, Role.CLIENT)
+  @Roles(
+    Role.ADMIN,
+    Role.LAB_MANAGER,
+    Role.ANALYST,
+    Role.SALES_ACCOUNTING,
+    Role.CLIENT,
+  )
   @ApiOperation({ summary: 'Get lab settings' })
-  @ApiResponse({ status: 200, description: 'Lab settings retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lab settings retrieved successfully',
+  })
   async getSettings() {
     return this.labSettingsService.getSettings();
   }
@@ -28,11 +37,11 @@ export class LabSettingsController {
   @Put()
   @Roles(Role.ADMIN, Role.LAB_MANAGER)
   @ApiOperation({ summary: 'Update lab settings' })
-  @ApiResponse({ status: 200, description: 'Lab settings updated successfully' })
-  async updateSettings(
-    @Body() dto: UpdateLabSettingsDto,
-    @Req() req: Request,
-  ) {
+  @ApiResponse({
+    status: 200,
+    description: 'Lab settings updated successfully',
+  })
+  async updateSettings(@Body() dto: UpdateLabSettingsDto, @Req() req: Request) {
     const user = (req as any).user;
     const context = {
       actorId: user.userId,
