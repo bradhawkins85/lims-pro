@@ -130,8 +130,35 @@ The seed script creates these test users:
 | Email | Password | Role | Access Level |
 |-------|----------|------|--------------|
 | admin@lims.local | admin123 | ADMIN | Full system access |
-| manager@lims.local | manager123 | MANAGER | Lab management |
-| tech@lims.local | tech123 | TECHNICIAN | Lab operations |
+| manager@lims.local | manager123 | LAB_MANAGER | QA/Reviewer - approve/release results & COAs |
+| analyst@lims.local | analyst123 | ANALYST | Create/edit samples & tests, enter results |
+| sales@lims.local | sales123 | SALES_ACCOUNTING | Read samples, manage quotes/PO/SO |
+| client@lims.local | client123 | CLIENT | Portal view of samples and results (read-only) |
+
+## Seeded Demo Data
+
+The seed script also creates comprehensive test data for demos and testing:
+
+### Master Data
+- **Client**: Acme Pharmaceuticals
+- **Sections**: Microbiology, Chemistry, Physical Testing
+- **Methods**: 14 methods across all sections
+- **Specifications**: 14 specifications with proper limits
+
+### Test Packs
+1. **Basic 6 Micro Tests**: TPC, Yeast & Mould, E. coli, Salmonella, S. aureus, P. aeruginosa
+2. **4× Heavy Metals**: Lead (Pb), Cadmium (Cd), Arsenic (As), Mercury (Hg)
+3. **4× Liquid Physical**: pH, Viscosity, Density, Refractive Index
+4. **TVC & Yeast & Mould Pack**: Total Plate Count, Yeast & Mould Count
+
+### Operational Data
+- **Job**: JOB-2025-001 for Acme Pharmaceuticals
+- **Sample 1** (SAMPLE-001): Raw material batch with 4 test assignments
+- **Sample 2** (SAMPLE-002): Finished product QC with 4 test assignments
+- **OOS Results**: 3 out-of-specification results for testing workflows:
+  - Sample 1: Lead (Pb) = 0.75 ppm (limit: 0.5 ppm)
+  - Sample 2: Total Plate Count = 1500 CFU/g (limit: 1000 CFU/g)
+  - Sample 2: Viscosity = 180 cP (limit: 150 cP)
 
 ## Testing the API
 
