@@ -12,11 +12,17 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSampleDto {
-  @ApiProperty({ description: 'Job ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Job ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @IsUUID()
   jobId: string;
 
-  @ApiProperty({ description: 'Client ID', example: '123e4567-e89b-12d3-a456-426614174001' })
+  @ApiProperty({
+    description: 'Client ID',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+  })
   @IsUUID()
   clientId: string;
 
@@ -59,7 +65,11 @@ export class CreateSampleDto {
   @MaxLength(255)
   sampleBatch?: string;
 
-  @ApiPropertyOptional({ description: 'Temperature on receipt in Celsius', minimum: -273.15, maximum: 1000 })
+  @ApiPropertyOptional({
+    description: 'Temperature on receipt in Celsius',
+    minimum: -273.15,
+    maximum: 1000,
+  })
   @IsOptional()
   @IsNumber()
   @Min(-273.15)
@@ -79,32 +89,50 @@ export class CreateSampleDto {
   comments?: string;
 
   // Status flags
-  @ApiPropertyOptional({ description: 'Flag for expired raw material', default: false })
+  @ApiPropertyOptional({
+    description: 'Flag for expired raw material',
+    default: false,
+  })
   @IsOptional()
   @IsBoolean()
   expiredRawMaterial?: boolean;
 
-  @ApiPropertyOptional({ description: 'Flag for post-irradiated raw material', default: false })
+  @ApiPropertyOptional({
+    description: 'Flag for post-irradiated raw material',
+    default: false,
+  })
   @IsOptional()
   @IsBoolean()
   postIrradiatedRawMaterial?: boolean;
 
-  @ApiPropertyOptional({ description: 'Flag for stability study', default: false })
+  @ApiPropertyOptional({
+    description: 'Flag for stability study',
+    default: false,
+  })
   @IsOptional()
   @IsBoolean()
   stabilityStudy?: boolean;
 
-  @ApiPropertyOptional({ description: 'Flag for urgent sample', default: false })
+  @ApiPropertyOptional({
+    description: 'Flag for urgent sample',
+    default: false,
+  })
   @IsOptional()
   @IsBoolean()
   urgent?: boolean;
 
-  @ApiPropertyOptional({ description: 'All micro tests assigned flag', default: false })
+  @ApiPropertyOptional({
+    description: 'All micro tests assigned flag',
+    default: false,
+  })
   @IsOptional()
   @IsBoolean()
   allMicroTestsAssigned?: boolean;
 
-  @ApiPropertyOptional({ description: 'All chemistry tests assigned flag', default: false })
+  @ApiPropertyOptional({
+    description: 'All chemistry tests assigned flag',
+    default: false,
+  })
   @IsOptional()
   @IsBoolean()
   allChemistryTestsAssigned?: boolean;

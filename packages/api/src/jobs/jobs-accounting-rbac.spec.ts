@@ -4,7 +4,7 @@ import { Role } from '@prisma/client';
 
 /**
  * Unit tests for RBAC on accounting fields in Jobs
- * 
+ *
  * DoD Requirement #6: Accounting fields visible/editable only to Sales/Accounting (and above)
  */
 describe('Jobs - Accounting Fields RBAC', () => {
@@ -14,14 +14,14 @@ describe('Jobs - Accounting Fields RBAC', () => {
     quoteNumber: 'QT-001',
     poNumber: 'PO-001',
     soNumber: 'SO-001',
-    amountExTax: 1500.00,
+    amountExTax: 1500.0,
     invoiced: false,
     clientId: 'client-uuid',
   };
 
   describe('Sales/Accounting Role', () => {
     const salesUser = {
-      userId: 'sales-user-id',
+      id: 'sales-user-id',
       email: 'sales@lims.local',
       role: Role.SALES_ACCOUNTING,
     };
@@ -44,7 +44,7 @@ describe('Jobs - Accounting Fields RBAC', () => {
 
   describe('Admin Role', () => {
     const adminUser = {
-      userId: 'admin-user-id',
+      id: 'admin-user-id',
       email: 'admin@lims.local',
       role: Role.ADMIN,
     };
@@ -72,7 +72,7 @@ describe('Jobs - Accounting Fields RBAC', () => {
 
   describe('Lab Manager Role', () => {
     const managerUser = {
-      userId: 'manager-user-id',
+      id: 'manager-user-id',
       email: 'manager@lims.local',
       role: Role.LAB_MANAGER,
     };
@@ -96,7 +96,7 @@ describe('Jobs - Accounting Fields RBAC', () => {
 
   describe('Analyst Role', () => {
     const analystUser = {
-      userId: 'analyst-user-id',
+      id: 'analyst-user-id',
       email: 'analyst@lims.local',
       role: Role.ANALYST,
     };
@@ -120,7 +120,7 @@ describe('Jobs - Accounting Fields RBAC', () => {
 
   describe('Client Role', () => {
     const clientUser = {
-      userId: 'client-user-id',
+      id: 'client-user-id',
       email: 'client@lims.local',
       role: Role.CLIENT,
     };
@@ -164,7 +164,7 @@ describe('Jobs - Accounting Fields RBAC', () => {
 
     it('should verify Sales/Accounting can update all accounting fields', () => {
       const salesUser = {
-        userId: 'sales-user-id',
+        id: 'sales-user-id',
         email: 'sales@lims.local',
         role: Role.SALES_ACCOUNTING,
       };
@@ -175,7 +175,7 @@ describe('Jobs - Accounting Fields RBAC', () => {
 
     it('should verify Analyst cannot update accounting fields', () => {
       const analystUser = {
-        userId: 'analyst-user-id',
+        id: 'analyst-user-id',
         email: 'analyst@lims.local',
         role: Role.ANALYST,
       };
@@ -192,13 +192,13 @@ describe('Jobs - Accounting Fields RBAC', () => {
       // for users without ACCOUNTING resource permissions
 
       const analystUser = {
-        userId: 'analyst-user-id',
+        id: 'analyst-user-id',
         email: 'analyst@lims.local',
         role: Role.ANALYST,
       };
 
       const salesUser = {
-        userId: 'sales-user-id',
+        id: 'sales-user-id',
         email: 'sales@lims.local',
         role: Role.SALES_ACCOUNTING,
       };
@@ -207,7 +207,7 @@ describe('Jobs - Accounting Fields RBAC', () => {
       const analystAccountingAccess = can(
         analystUser,
         Action.UPDATE,
-        Resource.ACCOUNTING
+        Resource.ACCOUNTING,
       );
       expect(analystAccountingAccess.allowed).toBe(false);
 
@@ -215,7 +215,7 @@ describe('Jobs - Accounting Fields RBAC', () => {
       const salesAccountingAccess = can(
         salesUser,
         Action.UPDATE,
-        Resource.ACCOUNTING
+        Resource.ACCOUNTING,
       );
       expect(salesAccountingAccess.allowed).toBe(true);
     });
@@ -233,7 +233,7 @@ describe('Jobs - Accounting Fields RBAC', () => {
 
       roles.forEach(({ role, shouldHaveAccess }) => {
         const user = {
-          userId: `user-${role}`,
+          id: `user-${role}`,
           email: `${role.toLowerCase()}@lims.local`,
           role,
         };
@@ -261,7 +261,9 @@ describe('Jobs - Accounting Fields RBAC', () => {
         }
       });
 
-      console.log('✅ DoD Requirement #6: Accounting field access control validated');
+      console.log(
+        '✅ DoD Requirement #6: Accounting field access control validated',
+      );
     });
   });
 });

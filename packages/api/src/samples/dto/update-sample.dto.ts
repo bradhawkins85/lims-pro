@@ -45,7 +45,11 @@ export class UpdateSampleDto {
   @MaxLength(255)
   sampleBatch?: string;
 
-  @ApiPropertyOptional({ description: 'Temperature on receipt in Celsius', minimum: -273.15, maximum: 1000 })
+  @ApiPropertyOptional({
+    description: 'Temperature on receipt in Celsius',
+    minimum: -273.15,
+    maximum: 1000,
+  })
   @IsOptional()
   @IsNumber()
   @Min(-273.15)

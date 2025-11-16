@@ -74,7 +74,9 @@ describe('Sample DTOs', () => {
 
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      const tempError = errors.find((e) => e.property === 'temperatureOnReceiptC');
+      const tempError = errors.find(
+        (e) => e.property === 'temperatureOnReceiptC',
+      );
       expect(tempError).toBeDefined();
     });
 
@@ -88,7 +90,9 @@ describe('Sample DTOs', () => {
 
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      const tempError = errors.find((e) => e.property === 'temperatureOnReceiptC');
+      const tempError = errors.find(
+        (e) => e.property === 'temperatureOnReceiptC',
+      );
       expect(tempError).toBeDefined();
     });
 
