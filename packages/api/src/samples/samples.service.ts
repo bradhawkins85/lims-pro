@@ -53,7 +53,9 @@ export class SamplesService {
         jobId: dto.jobId,
         clientId: dto.clientId,
         sampleCode: dto.sampleCode,
-        dateReceived: dto.dateReceived ? new Date(dto.dateReceived) : new Date(),
+        dateReceived: dto.dateReceived
+          ? new Date(dto.dateReceived)
+          : new Date(),
         dateDue: dto.dateDue ? new Date(dto.dateDue) : null,
         rmSupplier: dto.rmSupplier,
         sampleDescription: dto.sampleDescription,
@@ -217,18 +219,34 @@ export class SamplesService {
         ...(dto.dateDue && { dateDue: new Date(dto.dateDue) }),
         ...(dto.releaseDate && { releaseDate: new Date(dto.releaseDate) }),
         ...(dto.rmSupplier !== undefined && { rmSupplier: dto.rmSupplier }),
-        ...(dto.sampleDescription !== undefined && { sampleDescription: dto.sampleDescription }),
+        ...(dto.sampleDescription !== undefined && {
+          sampleDescription: dto.sampleDescription,
+        }),
         ...(dto.uinCode !== undefined && { uinCode: dto.uinCode }),
         ...(dto.sampleBatch !== undefined && { sampleBatch: dto.sampleBatch }),
-        ...(dto.temperatureOnReceiptC !== undefined && { temperatureOnReceiptC: dto.temperatureOnReceiptC }),
-        ...(dto.storageConditions !== undefined && { storageConditions: dto.storageConditions }),
+        ...(dto.temperatureOnReceiptC !== undefined && {
+          temperatureOnReceiptC: dto.temperatureOnReceiptC,
+        }),
+        ...(dto.storageConditions !== undefined && {
+          storageConditions: dto.storageConditions,
+        }),
         ...(dto.comments !== undefined && { comments: dto.comments }),
-        ...(dto.expiredRawMaterial !== undefined && { expiredRawMaterial: dto.expiredRawMaterial }),
-        ...(dto.postIrradiatedRawMaterial !== undefined && { postIrradiatedRawMaterial: dto.postIrradiatedRawMaterial }),
-        ...(dto.stabilityStudy !== undefined && { stabilityStudy: dto.stabilityStudy }),
+        ...(dto.expiredRawMaterial !== undefined && {
+          expiredRawMaterial: dto.expiredRawMaterial,
+        }),
+        ...(dto.postIrradiatedRawMaterial !== undefined && {
+          postIrradiatedRawMaterial: dto.postIrradiatedRawMaterial,
+        }),
+        ...(dto.stabilityStudy !== undefined && {
+          stabilityStudy: dto.stabilityStudy,
+        }),
         ...(dto.urgent !== undefined && { urgent: dto.urgent }),
-        ...(dto.allMicroTestsAssigned !== undefined && { allMicroTestsAssigned: dto.allMicroTestsAssigned }),
-        ...(dto.allChemistryTestsAssigned !== undefined && { allChemistryTestsAssigned: dto.allChemistryTestsAssigned }),
+        ...(dto.allMicroTestsAssigned !== undefined && {
+          allMicroTestsAssigned: dto.allMicroTestsAssigned,
+        }),
+        ...(dto.allChemistryTestsAssigned !== undefined && {
+          allChemistryTestsAssigned: dto.allChemistryTestsAssigned,
+        }),
         ...(dto.released !== undefined && { released: dto.released }),
         ...(dto.retest !== undefined && { retest: dto.retest }),
         updatedById: context.actorId,
