@@ -141,6 +141,7 @@ Once the API is running, visit:
 - **Health Check**: http://localhost:3000
 
 ### Additional Documentation
+- **[Example Prompts](./EXAMPLE_PROMPTS.md)**: GitHub Copilot prompts for implementing features
 - **[Audit Logging](./AUDIT_LOGGING_DOCUMENTATION.md)**: Comprehensive audit trail system
 - **[API Implementation Summary](./API_IMPLEMENTATION_SUMMARY.md)**: Detailed API documentation
 - **[RBAC Implementation](./RBAC_IMPLEMENTATION_SUMMARY.md)**: Role-based access control
