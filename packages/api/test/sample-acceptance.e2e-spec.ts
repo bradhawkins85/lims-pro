@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
@@ -8,21 +12,21 @@ import { Role } from '@prisma/client';
 
 /**
  * Sample Acceptance Tests (Gherkin-style BDD)
- * 
+ *
  * These tests validate the acceptance criteria for sample management:
  * 1. COA versioning and immutability
- * 2. Audit logging with change tracking  
+ * 2. Audit logging with change tracking
  * 3. RBAC enforcement for sample operations
  */
 describe('Sample Acceptance Tests (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  
+
   // Test users
   let adminToken: string;
   let managerToken: string;
   let analystToken: string;
-  
+
   // Test data IDs
   let adminUserId: string;
   let managerUserId: string;
@@ -232,15 +236,23 @@ describe('Sample Acceptance Tests (e2e)', () => {
       await prisma.sample.deleteMany({ where: { id: sampleId } });
       await prisma.job.deleteMany({ where: { id: jobId } });
       await prisma.client.deleteMany({ where: { id: clientId } });
-      await prisma.testDefinition.deleteMany({ where: { id: testDefinitionId } });
+      await prisma.testDefinition.deleteMany({
+        where: { id: testDefinitionId },
+      });
       await prisma.section.deleteMany({
-        where: { createdById: { in: [adminUserId, managerUserId, analystUserId] } },
+        where: {
+          createdById: { in: [adminUserId, managerUserId, analystUserId] },
+        },
       });
       await prisma.specification.deleteMany({
-        where: { createdById: { in: [adminUserId, managerUserId, analystUserId] } },
+        where: {
+          createdById: { in: [adminUserId, managerUserId, analystUserId] },
+        },
       });
       await prisma.method.deleteMany({
-        where: { createdById: { in: [adminUserId, managerUserId, analystUserId] } },
+        where: {
+          createdById: { in: [adminUserId, managerUserId, analystUserId] },
+        },
       });
       await prisma.user.deleteMany({
         where: { id: { in: [adminUserId, managerUserId, analystUserId] } },
@@ -252,7 +264,7 @@ describe('Sample Acceptance Tests (e2e)', () => {
 
   /**
    * Scenario: Exporting a COA creates versioned, immutable report
-   * 
+   *
    * Given a Sample with released TestAssignments
    * When the Analyst exports a COA
    * Then a COAReport with version = 1 exists with dataSnapshot and pdfKey
@@ -317,7 +329,7 @@ describe('Sample Acceptance Tests (e2e)', () => {
     it('When a result is later edited and a new COA is exported', async () => {
       // Update test assignment result
       await request(app.getHttpServer())
-        .patch(`/test-assignments/${testAssignmentId}`)
+        .put(`/tests/${testAssignmentId}`)
         .set('Authorization', `Bearer ${analystToken}`)
         .send({
           result: '75', // Changed from 50 to 75
@@ -400,7 +412,7 @@ describe('Sample Acceptance Tests (e2e)', () => {
 
   /**
    * Scenario: All changes are audited
-   * 
+   *
    * Given a Sample exists
    * When a user updates "temperatureOnReceiptC" from 5 to 8
    * Then an AuditLog entry exists with changes.temperatureOnReceiptC.old = 5 and new = 8
@@ -447,7 +459,9 @@ describe('Sample Acceptance Tests (e2e)', () => {
       expect(auditData.logs.length).toBeGreaterThan(0);
 
       // Find the UPDATE action with temperatureOnReceiptC change
-      const tempUpdateLog = auditData.logs.find((log) => {
+
+      const tempUpdateLog = auditData.logs.find((log: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return (
           log.action === 'UPDATE' &&
           log.changes &&
@@ -478,7 +492,7 @@ describe('Sample Acceptance Tests (e2e)', () => {
 
   /**
    * Scenario: RBAC prevents unauthorized release
-   * 
+   *
    * Given a user with Analyst role
    * When they POST /samples/:id/release
    * Then the API responds 403 Forbidden
